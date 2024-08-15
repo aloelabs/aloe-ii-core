@@ -53,7 +53,7 @@ contract BorrowerNFT is ERC721Z {
 
     /// @inheritdoc ERC721Z
     function _INDEX_SIZE() internal pure override returns (uint256) {
-        return 2;
+        return 4;
     }
 
     /// @inheritdoc ERC721Z
