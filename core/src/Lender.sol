@@ -144,6 +144,7 @@ contract Lender is Ledger {
 
         // Mint shares, track rewards, and (if applicable) handle courier accounting
         cache.totalSupply = _mint(beneficiary, shares, amount, cache.totalSupply, courierId);
+        require(cache.totalSupply > 1e5);
         // Assume tokens are transferred
         cache.lastBalance += amount;
 
