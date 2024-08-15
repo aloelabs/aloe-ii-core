@@ -95,9 +95,9 @@ contract LenderReferralsTest is Test {
         (id, wallet, cut) = _enroll(id, wallet, cut);
         vm.assume(wallet != address(this));
 
-        deal(address(asset), address(lender), 1);
+        deal(address(asset), address(lender), 1e5 + 1);
 
-        lender.deposit(1, address(this), id);
+        lender.deposit(1e5 + 1, address(this), id);
         assertEq(lender.courierOf(address(this)), id);
     }
 
@@ -106,11 +106,11 @@ contract LenderReferralsTest is Test {
         vm.assume(wallet != account && account != lender.RESERVE());
 
         vm.prank(account);
-        lender.approve(address(this), 1);
+        lender.approve(address(this), 1e5 + 1);
 
-        deal(address(asset), address(lender), 1);
+        deal(address(asset), address(lender), 1e5 + 1);
 
-        lender.deposit(1, account, id);
+        lender.deposit(1e5 + 1, account, id);
         assertEq(lender.courierOf(account), id);
     }
 
@@ -153,9 +153,9 @@ contract LenderReferralsTest is Test {
         lender.approve(address(this), 1);
 
         deal(address(lender), account, 1);
-        deal(address(asset), address(lender), 1);
+        deal(address(asset), address(lender), 1e5 + 1);
 
-        lender.deposit(1, account, id);
+        lender.deposit(1e5 + 1, account, id);
         assertEq(lender.courierOf(account), 0);
     }
 
@@ -166,7 +166,7 @@ contract LenderReferralsTest is Test {
         address caller,
         uint112 amount
     ) public {
-        vm.assume(amount > 1);
+        vm.assume(amount > 1e6);
         (id, wallet, cut) = _enroll(id, wallet, cut);
         address to = caller;
 
