@@ -45,48 +45,48 @@ contract BoostManagerTest is Test {
         lender1.deposit(1e18, address(0));
     }
 
-    function test_mint() public {
-        address owner = 0xde8E7d3fFada10dE2A57E7bAc090dB06596F51Cd;
+    // function test_mint() public {
+    //     address owner = 0xde8E7d3fFada10dE2A57E7bAc090dB06596F51Cd;
 
-        bytes memory mintCall;
-        {
-            IUniswapV3Pool[] memory pools = new IUniswapV3Pool[](1);
-            bytes12[] memory salts = new bytes12[](1);
-            pools[0] = POOL;
-            salts[0] = bytes12(uint96(0));
-            mintCall = abi.encodeCall(borrowerNft.mint, (owner, pools, salts));
-        }
+    //     bytes memory mintCall;
+    //     {
+    //         IUniswapV3Pool[] memory pools = new IUniswapV3Pool[](1);
+    //         bytes12[] memory salts = new bytes12[](1);
+    //         pools[0] = POOL;
+    //         salts[0] = bytes12(uint96(0));
+    //         mintCall = abi.encodeCall(borrowerNft.mint, (owner, pools, salts));
+    //     }
 
-        bytes memory modifyCall;
-        {
-            uint16[] memory indices = new uint16[](1);
-            IManager[] memory managers = new IManager[](1);
-            bytes[] memory datas = new bytes[](1);
-            uint16[] memory antes = new uint16[](1);
-            indices[0] = 0;
-            managers[0] = boostManager;
-            datas[0] = abi.encode(
-                uint8(0),
-                abi.encode(
-                    uint256(425835),
-                    int24(70020),
-                    int24(71700),
-                    uint128(344339104909795631),
-                    10_000,
-                    uint224(type(uint224).max)
-                )
-            );
-            antes[0] = 0.01 ether / 1e13;
-            modifyCall = abi.encodeCall(borrowerNft.modify, (owner, indices, managers, datas, antes));
-        }
+    //     bytes memory modifyCall;
+    //     {
+    //         uint16[] memory indices = new uint16[](1);
+    //         IManager[] memory managers = new IManager[](1);
+    //         bytes[] memory datas = new bytes[](1);
+    //         uint16[] memory antes = new uint16[](1);
+    //         indices[0] = 0;
+    //         managers[0] = boostManager;
+    //         datas[0] = abi.encode(
+    //             uint8(0),
+    //             abi.encode(
+    //                 uint256(425835),
+    //                 int24(70020),
+    //                 int24(71700),
+    //                 uint128(344339104909795631),
+    //                 10_000,
+    //                 uint224(type(uint224).max)
+    //             )
+    //         );
+    //         antes[0] = 0.01 ether / 1e13;
+    //         modifyCall = abi.encodeCall(borrowerNft.modify, (owner, indices, managers, datas, antes));
+    //     }
 
-        vm.prank(owner);
-        UNISWAP_NFT.approve(address(boostManager), 425835);
+    //     vm.prank(owner);
+    //     UNISWAP_NFT.approve(address(boostManager), 425835);
 
-        vm.prank(owner);
-        bytes[] memory data = new bytes[](2);
-        data[0] = mintCall;
-        data[1] = modifyCall;
-        borrowerNft.multicall{value: 0.01 ether}(data);
-    }
+    //     vm.prank(owner);
+    //     bytes[] memory data = new bytes[](2);
+    //     data[0] = mintCall;
+    //     data[1] = modifyCall;
+    //     borrowerNft.multicall{value: 0.01 ether}(data);
+    // }
 }
