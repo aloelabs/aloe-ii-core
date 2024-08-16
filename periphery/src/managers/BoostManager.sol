@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.23;
 
+import {SignatureCheckerLib} from "solady/utils/SignatureCheckerLib.sol";
 import {ERC20, SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
 
 import {IUniswapV3SwapCallback} from "v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
@@ -78,12 +79,21 @@ contract BoostManager is IManager, IUniswapV3SwapCallback {
         uint24 boost;
         // Packed maxBorrow0 and maxBorrow1; slippage protection
         uint224 maxBorrows;
-        (tokenId, lower, upper, liquidity, boost, maxBorrows) = abi.decode(
+        // signature
+        bytes memory signature;
+        (tokenId, lower, upper, liquidity, boost, maxBorrows, signature) = abi.decode(
             args,
-            (uint256, int24, int24, uint128, uint24, uint224)
+            (uint256, int24, int24, uint128, uint24, uint224, bytes)
         );
 
-        require(owner == UNISWAP_NFT.ownerOf(tokenId), "Aloe: owners must match to import");
+        require(
+            owner == UNISWAP_NFT.ownerOf(tokenId) &&
+                SignatureCheckerLib.isValidSignatureNow(
+                    owner,
+                    keccak256(abi.encode(borrower, tokenId, liquidity)),
+                    signature
+                )
+        );
 
         unchecked {
             (uint256 amount0, uint256 amount1) = _withdrawFromUniswapNFT(tokenId, liquidity, msg.sender);
