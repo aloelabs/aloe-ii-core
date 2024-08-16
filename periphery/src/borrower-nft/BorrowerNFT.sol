@@ -107,8 +107,6 @@ contract BorrowerNFT is ERC721Z {
                 emit Modify(owner, borrower, managers[k]);
             }
         }
-
-        require(address(this).balance == 0, "Aloe: antes sum");
     }
 
     function multicall(bytes[] calldata data) external payable {
