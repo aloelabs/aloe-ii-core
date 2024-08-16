@@ -98,7 +98,8 @@ contract FrontendManager is IManager, IUniswapV3SwapCallback {
 
             // swap
             if (action == 6) {
-                (int256 amount0, int256 amount1) = abi.decode(args[i], (int256, int256));
+                (int256 amount0, int256 amount1, uint32 deadline) = abi.decode(args[i], (int256, int256, uint32));
+                require(block.timestamp < deadline, "deadline");
 
                 int256 amountIn;
                 int256 amountOut;

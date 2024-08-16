@@ -125,8 +125,10 @@ contract BoostManager is IManager, IUniswapV3SwapCallback {
         uint128 maxSpend;
         // Whether to swap token0 for token1 or vice versa
         bool zeroForOne;
+        // Deadline for swaps (if any need to take place)
+        uint32 deadline;
 
-        (maxSpend, zeroForOne) = abi.decode(args, (uint128, bool));
+        (maxSpend, zeroForOne, deadline) = abi.decode(args, (uint128, bool, uint32));
         (liquidity, , , , ) = borrower.UNISWAP_POOL().positions(keccak256(abi.encodePacked(msg.sender, lower, upper)));
 
         // Burn liquidity and collect fees
@@ -157,7 +159,7 @@ contract BoostManager is IManager, IUniswapV3SwapCallback {
                 sqrtPriceLimitX96: TickMath.MAX_SQRT_RATIO - 1,
                 data: abi.encode(borrower, token0, token1)
             });
-            require(uint256(spent1) <= maxSpend, "slippage");
+            require(uint256(spent1) <= maxSpend && block.timestamp < deadline, "slippage/deadline");
             assets0 = liabilities0;
             assets1 -= uint256(spent1);
         } else if (surplus1 < 0 && zeroForOne) {
@@ -168,7 +170,7 @@ contract BoostManager is IManager, IUniswapV3SwapCallback {
                 sqrtPriceLimitX96: TickMath.MIN_SQRT_RATIO + 1,
                 data: abi.encode(borrower, token0, token1)
             });
-            require(uint256(spent0) <= maxSpend, "slippage");
+            require(uint256(spent0) <= maxSpend && block.timestamp < deadline, "slippage/deadline");
             assets0 -= uint256(spent0);
             assets1 = liabilities1;
         }
