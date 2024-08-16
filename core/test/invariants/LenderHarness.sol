@@ -115,7 +115,7 @@ contract LenderHarness {
             return;
         }
 
-        uint256 amount = LENDER.convertToAssets(1) + 1;
+        uint256 amount = LENDER.convertToAssets(1e5 + 1) + 1;
         MockERC20 mock = MockERC20(address(LENDER.asset()));
         mock.mint(address(LENDER), amount);
 
@@ -163,6 +163,7 @@ contract LenderHarness {
     /// @notice Deposits `amount` and sends new `shares` to `beneficiary`
     function deposit(uint112 amount, address beneficiary) public returns (uint256 shares) {
         amount = uint112(amount % (LENDER.maxDeposit(msg.sender) + 1));
+        if (amount <= 1e5) amount = 1e5 + 1;
 
         ERC20 asset = LENDER.asset();
         uint256 free = asset.balanceOf(address(LENDER)) - LENDER.lastBalance();

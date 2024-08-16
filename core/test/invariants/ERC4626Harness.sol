@@ -79,6 +79,7 @@ contract ERC4626Harness {
 
         // MUST return as close to and no more than the exact amount of shares that would be minted in a `deposit` call
         shares = VAULT.previewDeposit(amount);
+        if (shares <= 1e5) return 0;
 
         // Make sure `msg.sender` has enough assets to deposit
         if (amount > balance) {
@@ -132,7 +133,7 @@ contract ERC4626Harness {
     }
 
     function mint(uint256 shares, address receiver, bool shouldPrepay) public returns (uint256 amount) {
-        shares = shares % (VAULT.maxMint(msg.sender) + 1); // TODO: if remove this, could run with reverts allowed
+        shares = 1e5 + 1 + (shares % (VAULT.maxMint(msg.sender) - 1e5)); // TODO: if remove this, could run with reverts allowed
 
         ERC20 asset = VAULT.asset();
         uint256 balance = asset.balanceOf(msg.sender);

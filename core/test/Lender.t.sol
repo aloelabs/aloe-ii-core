@@ -148,7 +148,7 @@ contract LenderTest is Test {
     }
 
     function test_cannotDepositWithoutERC20Transfer(uint112 amount, address to) public {
-        if (amount == 0) amount++;
+        if (amount <= 1e5) amount = 1e5 + 1;
 
         deal(address(asset), address(lender), amount - 1);
         vm.expectRevert(bytes("TRANSFER_FROM_FAILED"));
@@ -156,7 +156,7 @@ contract LenderTest is Test {
     }
 
     function test_previewAndDeposit(uint112 amount, address to) public {
-        if (amount == 0) amount++;
+        if (amount <= 1e5) amount = 1e5 + 1;
 
         uint256 expectedShares = lender.previewDeposit(amount);
         uint256 totalSupply = lender.totalSupply();
@@ -186,11 +186,19 @@ contract LenderTest is Test {
         if (amountA == 0) {
             vm.expectRevert(bytes("Aloe: zero impact"));
             lender.deposit(amountA, toA);
+        } else if (amountA <= 1e5) {
+            vm.expectRevert(bytes(""));
+            lender.deposit(amountA, toA);
+            return;
         } else lender.deposit(amountA, toA);
 
         if (amountB == 0) {
             vm.expectRevert(bytes("Aloe: zero impact"));
             lender.deposit(amountB, toB);
+        } else if (lender.totalSupply() + amountB <= 1e5) {
+            vm.expectRevert(bytes(""));
+            lender.deposit(amountB, toB);
+            return;
         } else lender.deposit(amountB, toB);
 
         assertEq(lender.underlyingBalance(toA), amountA);
