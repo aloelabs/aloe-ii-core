@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.23;
 
+import {SignatureCheckerLib} from "solady/utils/SignatureCheckerLib.sol";
 import {ERC20, SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
 
 import {Borrower, IManager} from "aloe-ii-core/Borrower.sol";
@@ -42,12 +43,22 @@ contract UniswapNFTManager is IManager {
         int24 upper;
         // The change in the NFT's liquidity. Negative values move NFT-->Borrower, positives do the opposite
         int128 liquidity;
-        (tokenId, lower, upper, liquidity, positions) = abi.decode(data[20:], (uint256, int24, int24, int128, uint208));
+        (tokenId, lower, upper, liquidity, positions) = abi.decode(
+            data[20:660],
+            (uint256, int24, int24, int128, uint208)
+        );
 
         // move position from NonfungiblePositionManager to Borrower
         if (liquidity < 0) {
-            // safety checks since this contract will be approved to manager users' positions
-            require(owner == UNISWAP_NFT.ownerOf(tokenId));
+            // safety checks since this contract will be approved to manage users' positions
+            require(
+                owner == UNISWAP_NFT.ownerOf(tokenId) &&
+                    SignatureCheckerLib.isValidSignatureNowCalldata(
+                        owner,
+                        keccak256(abi.encode(borrower, tokenId, liquidity)),
+                        data[660:]
+                    )
+            );
 
             _withdrawFromNFT(tokenId, uint128(-liquidity), msg.sender);
             borrower.uniswapDeposit(lower, upper, uint128((uint256(uint128(-liquidity)) * 999) / 1000));
