@@ -24,6 +24,8 @@ contract BoostManager is IManager, IUniswapV3SwapCallback {
 
     IUniswapPositionNFT public immutable UNISWAP_NFT;
 
+    mapping(address => uint256) public nonces;
+
     constructor(Factory factory, address borrowerNft, IUniswapPositionNFT uniswapNft) {
         FACTORY = factory;
         BORROWER_NFT = borrowerNft;
@@ -66,6 +68,18 @@ contract BoostManager is IManager, IUniswapV3SwapCallback {
         return 0;
     }
 
+    function DOMAIN_SEPARATOR() public view returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    keccak256("EIP712Domain(string version,uint256 chainId,address verifyingContract)"),
+                    keccak256("1"),
+                    block.chainid,
+                    address(this)
+                )
+            );
+    }
+
     function _action0Mint(Borrower borrower, address owner, bytes memory args) private returns (uint208) {
         // The ID of the Uniswap NFT to import
         uint256 tokenId;
@@ -90,7 +104,24 @@ contract BoostManager is IManager, IUniswapV3SwapCallback {
             owner == UNISWAP_NFT.ownerOf(tokenId) &&
                 SignatureCheckerLib.isValidSignatureNow(
                     owner,
-                    keccak256(abi.encode(borrower, tokenId, liquidity)),
+                    keccak256(
+                        abi.encodePacked(
+                            "\x19\x01",
+                            DOMAIN_SEPARATOR(),
+                            keccak256(
+                                abi.encode(
+                                    keccak256(
+                                        "Permit(address owner,address spender,uint128 liquidity,uint256 nonce,uint256 tokenId)"
+                                    ),
+                                    owner,
+                                    msg.sender,
+                                    liquidity,
+                                    nonces[owner]++,
+                                    tokenId
+                                )
+                            )
+                        )
+                    ),
                     signature
                 )
         );
@@ -169,7 +200,7 @@ contract BoostManager is IManager, IUniswapV3SwapCallback {
                 sqrtPriceLimitX96: TickMath.MAX_SQRT_RATIO - 1,
                 data: abi.encode(borrower, token0, token1)
             });
-            require(uint256(spent1) <= maxSpend && block.timestamp < deadline, "slippage/deadline");
+            require(uint256(spent1) <= maxSpend && block.timestamp <= deadline, "slippage/deadline");
             assets0 = liabilities0;
             assets1 -= uint256(spent1);
         } else if (surplus1 < 0 && zeroForOne) {
@@ -180,7 +211,7 @@ contract BoostManager is IManager, IUniswapV3SwapCallback {
                 sqrtPriceLimitX96: TickMath.MIN_SQRT_RATIO + 1,
                 data: abi.encode(borrower, token0, token1)
             });
-            require(uint256(spent0) <= maxSpend && block.timestamp < deadline, "slippage/deadline");
+            require(uint256(spent0) <= maxSpend && block.timestamp <= deadline, "slippage/deadline");
             assets0 -= uint256(spent0);
             assets1 = liabilities1;
         }

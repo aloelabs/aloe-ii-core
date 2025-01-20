@@ -18,6 +18,8 @@ contract UniswapNFTManager is IManager {
 
     IUniswapPositionNFT public immutable UNISWAP_NFT;
 
+    mapping(address => uint256) public nonces;
+
     constructor(Factory factory, address borrowerNft, IUniswapPositionNFT uniswapNft) {
         FACTORY = factory;
         BORROWER_NFT = borrowerNft;
@@ -55,7 +57,24 @@ contract UniswapNFTManager is IManager {
                 owner == UNISWAP_NFT.ownerOf(tokenId) &&
                     SignatureCheckerLib.isValidSignatureNowCalldata(
                         owner,
-                        keccak256(abi.encode(borrower, tokenId, liquidity)),
+                        keccak256(
+                            abi.encodePacked(
+                                "\x19\x01",
+                                DOMAIN_SEPARATOR(),
+                                keccak256(
+                                    abi.encode(
+                                        keccak256(
+                                            "Permit(address owner,address spender,uint128 liquidity,uint256 nonce,uint256 tokenId)"
+                                        ),
+                                        owner,
+                                        msg.sender,
+                                        uint128(-liquidity),
+                                        nonces[owner]++,
+                                        tokenId
+                                    )
+                                )
+                            )
+                        ),
                         data[660:]
                     )
             );
@@ -91,6 +110,18 @@ contract UniswapNFTManager is IManager {
             token0.safeTransfer(owner, token0.balanceOf(address(this)));
             token1.safeTransfer(owner, token1.balanceOf(address(this)));
         }
+    }
+
+    function DOMAIN_SEPARATOR() public view returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    keccak256("EIP712Domain(string version,uint256 chainId,address verifyingContract)"),
+                    keccak256("1"),
+                    block.chainid,
+                    address(this)
+                )
+            );
     }
 
     function _withdrawFromNFT(uint256 tokenId, uint128 liquidity, address recipient) private {
