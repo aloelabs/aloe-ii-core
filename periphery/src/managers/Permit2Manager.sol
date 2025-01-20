@@ -41,6 +41,14 @@ contract Permit2Manager is IManager {
         // | owner            |     0 |  20 |     20 |
         // | permit2 selector |    20 |  24 |      4 |
         // | permit2 args     |    24 | 408 |    384 |
+        // | - token          |    36 |  56 | (20)32 |
+        // | - amount         |    56 |  88 |     32 |
+        // | - nonce          |    88 | 120 |     32 |
+        // | - deadline       |   120 | 152 |     32 |
+        // | - to             |   164 | 184 | (20)32 |
+        // | - requestedAmount|   184 | 216 |     32 |
+        // | - signer         |   228 | 248 | (20)32 |
+        // | - signature      |   248 | 408 |    160 |
         // | borrower call    |   408 |   ? |      ? |
         // -------------------------------------------
 
@@ -50,11 +58,13 @@ contract Permit2Manager is IManager {
 
         // Before calling `PERMIT2`, verify
         // (a) correct function selector
-        // (b) `to` field is the Borrower (`msg.sender`)
-        // (c) correct signer address, i.e. [claimed Permit2 signer] == [user who owns the Borrower]
+        // (b) `to` field matches the highest 160 bits of `nonce`
+        // (c) `to` field is the Borrower (`msg.sender`)
+        // (d) correct signer address, i.e. [claimed Permit2 signer] == [user who owns the Borrower]
         // Note that data[:20] is the true owner prepended by the `BORROWER_NFT`
         require(
             bytes4(dataPermit2[:4]) == IPermit2.permitTransferFrom.selector &&
+                bytes20(dataPermit2[68:88]) == bytes20(msg.sender) &&
                 bytes20(dataPermit2[144:164]) == bytes20(msg.sender) &&
                 bytes20(dataPermit2[208:228]) == bytes20(data[:20])
         );
